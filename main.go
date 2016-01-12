@@ -24,9 +24,11 @@ func main() {
 	// Parse flags.
 	var port int
 	var vlc *bool
+	var mplayer *bool
 	var seed *bool
 
 	vlc = flag.Bool("vlc", false, "Open vlc to play the file")
+	mplayer = flag.Bool("mplayer", false, "Open mplayer to play the file")
 	flag.IntVar(&port, "port", 8080, "Port to stream the video on")
 	seed = flag.Bool("seed", false, "Seed after finished downloading")
 	flag.Parse()
@@ -55,6 +57,14 @@ func main() {
 				time.Sleep(time.Second)
 			}
 			playInVlc(port)
+		}()
+	}
+	if *mplayer {
+		go func() {
+			for !client.ReadyForPlayback() {
+				time.Sleep(time.Second)
+			}
+			playInMplayer(port)
 		}()
 	}
 
@@ -93,4 +103,14 @@ func playInVlc(port int) {
 	if err := exec.Command(command[0], command[1:]...).Start(); err != nil {
 		log.Printf("Error opening vlc: %s\n", err)
 	}
+}
+
+func playInMplayer(port int) {
+		log.Printf("Playing in mplayer")
+		command := []string{"mplayer", "http://localhost:"+strconv.Itoa(port), "-cache 2048"}
+		err := exec.Command(command[0], command[1]).Start()
+
+		if err != nil {
+			log.Printf("Error opening mplayer: %s\n", err)
+		}
 }
